@@ -19,6 +19,7 @@ namespace UsageExample
     }
     
     [Module(Name = "execute")]
+    [Alias("run")]
     class Commands
     {
         [Command(Name = "HelloDibil")]

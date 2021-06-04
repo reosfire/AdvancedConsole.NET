@@ -22,6 +22,10 @@ namespace AdvancedConsole.Commands.Modules.Building
                 if (commandAttribute is null) continue;
                 Command.Builder commandBuilder = new Command.Builder().SetName(commandAttribute.Name);
                 commandBuilder.SetMethod(methodInfo);
+                foreach (AliasAttribute aliasAttribute in methodInfo.GetCustomAttributes<AliasAttribute>())
+                {
+                    commandBuilder.AddAlias(aliasAttribute.Value);
+                }
                 Command command = commandBuilder.Build();
                 if (moduleAttribute is null) previous?.AddCommand(command);
                 else moduleBuilder.AddCommand(command);
@@ -37,6 +41,10 @@ namespace AdvancedConsole.Commands.Modules.Building
             }
             else
             {
+                foreach (AliasAttribute aliasAttribute in type.GetCustomAttributes<AliasAttribute>())
+                {
+                    moduleBuilder.AddAlias(aliasAttribute.Value);
+                }
                 module = moduleBuilder.SetName(moduleAttribute.Name).Build();
                 previous.AddSubModule(module);
                 module = new Module.Builder().AddSubModule(module).Build();

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Runtime.CompilerServices;
+using AdvancedConsole.Commands.CommandParsing;
 using AdvancedConsole.Commands.Modules;
 
 namespace AdvancedConsole.Reading.Completing
@@ -29,8 +29,13 @@ namespace AdvancedConsole.Reading.Completing
             {
                 foreach (ITreeNode treeNode in Tree.Nodes)
                 {
-                    if (!treeNode.Name.StartsWith(words[^1])) continue;
-                    yield return treeNode.Name[words[^1].Length..];
+                    if (treeNode.Name.StartsWith(words[^1]))
+                        yield return treeNode.Name[words[^1].Length..];
+                    foreach (string alias in treeNode.Aliases)
+                    {
+                        if (alias.StartsWith(words[^1]))
+                            yield return alias[words[^1].Length..];
+                    }
                 }
             }
             else
@@ -41,6 +46,11 @@ namespace AdvancedConsole.Reading.Completing
                     {
                         if (treeNodeSubNode.Name.StartsWith(words[^1])) 
                             yield return treeNodeSubNode.Name[words[^1].Length..];
+                        foreach (string alias in treeNodeSubNode.Aliases)
+                        {
+                            if (alias.StartsWith(words[^1]))
+                                yield return alias[words[^1].Length..];
+                        }
                     }
                 }   
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace AdvancedConsole.Commands.Modules
@@ -20,7 +21,7 @@ namespace AdvancedConsole.Commands.Modules
             {
                 foreach (ITreeNode subNode in node.SubNodes)
                 {
-                    if(subNode.Name != path[0]) continue;
+                    if(subNode.Name != path[0] && !subNode.Aliases.Contains(path[0])) continue;
                     yield return subNode;
                 }
             }
@@ -28,7 +29,7 @@ namespace AdvancedConsole.Commands.Modules
             {
                 foreach (ITreeNode subNode in node.SubNodes)
                 {
-                    if(subNode.Name != path[0]) continue;
+                    if(subNode.Name != path[0] && !subNode.Aliases.Contains(path[0])) continue;
                     foreach (ITreeNode treeNode in subNode.GetNodes(path[1..]))
                     {
                         yield return treeNode;

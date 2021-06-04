@@ -27,7 +27,7 @@ namespace AdvancedConsole.Commands.Modules
             if(path.Length == 0) yield break;
             foreach (ITreeNode treeNode in Nodes)
             {
-                if(treeNode.Name != path[0]) continue;
+                if(treeNode.Name != path[0] && !treeNode.Aliases.Contains(path[0])) continue;
                 foreach (ITreeNode node in treeNode.GetNodes(path[1..]))
                 {
                     yield return node;
