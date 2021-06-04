@@ -40,10 +40,7 @@ namespace AdvancedConsole.Commands.Modules
         }
         public IEnumerable<Command> GetCommands(CommandToken token)
         {
-            foreach (Command command in GetAllCommands(token.Path))
-            {
-                if (command.IsWithSignature(token.Signature)) yield return command;
-            }
+            return GetAllCommands(token.Path).Where(command => command.IsMatch(token));
         }
     }
 }

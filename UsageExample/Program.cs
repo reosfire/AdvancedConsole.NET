@@ -22,10 +22,10 @@ namespace UsageExample
     [Alias("run")]
     class Commands
     {
-        [Command(Name = "HelloDibil")]
-        public void HelloDibil()
+        [Command(Name = "HelloWorld")]
+        public void HelloWorld()
         {
-            Console.WriteLine("Hello dolbayob");
+            Console.WriteLine("Hello world!");
         }
         [Command(Name = "HelloWorld")]
         public void GetNumbersBefore(int i)

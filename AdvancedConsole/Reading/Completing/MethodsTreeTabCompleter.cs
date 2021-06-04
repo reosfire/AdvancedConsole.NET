@@ -52,7 +52,7 @@ namespace AdvancedConsole.Reading.Completing
                                 yield return alias[words[^1].Length..];
                         }
                     }
-                }   
+                }
             }
         }
     }

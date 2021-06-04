@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using AdvancedConsole.Commands.CommandParsing;
 
 namespace AdvancedConsole.Commands.Modules
 {
@@ -11,19 +12,22 @@ namespace AdvancedConsole.Commands.Modules
         public IReadOnlyCollection<string> Aliases { get; private set; }
         public IEnumerable<ITreeNode> SubNodes => new ITreeNode[0];
         public MethodInfo Method { get; private set; }
-        public ParameterInfo[] Signature => Method.GetParameters();
+        public ParameterInfo[] InputParameters => Method.GetParameters();
+        public Type Output => Method.ReturnType;
 
         public void Execute()
         {
             Method.Invoke(Activator.CreateInstance(Method.DeclaringType),new object[0]);
         }
         
-        public bool IsWithSignature(Type[] signature)
+        public bool IsMatch(CommandToken token)
         {
-            if (signature.Length != Signature.Length) return false;
-            for (int i = 0; i < signature.Length; i++)
+            Type[] tokenInputParametersTypes = token.InputParametersTypes;
+            if (Output != token.OutputType) return false;
+            if (tokenInputParametersTypes.Length != InputParameters.Length) return false;
+            for (int i = 0; i < tokenInputParametersTypes.Length; i++)
             {
-                if (signature[i] != Signature[i].ParameterType) return false;
+                if (tokenInputParametersTypes[i] != InputParameters[i].ParameterType) return false;
             }
             return true;
         }

@@ -1,17 +1,20 @@
 ﻿using System;
+using System.Reflection;
 
 namespace AdvancedConsole.Commands.CommandParsing
 {
     public struct CommandToken
     {
         public string[] Path { get; private set; }
-        public Type[] Signature { get; private set; }
+        public Type[] InputParametersTypes { get; private set; }
+        public Type OutputType { get; private set; }
 
-        public CommandToken(string[] path, Type[] signature)
+        public CommandToken(string[] path, Type[] inputParametersTypes, Type outputType)
         {
             Path = path;
-            Signature = signature;
+            InputParametersTypes = inputParametersTypes;
+            OutputType = outputType;
         }
-        public CommandToken(string[] path) : this(path, new Type[0]){}
+        public CommandToken(string[] path) : this(path, new Type[0], typeof(void)){}
     }
 }
