@@ -2,6 +2,6 @@
 {
     public interface IParser
     {
-        CommandToken Parse(string command);
+        string[] Parse(string command);
     }
 }

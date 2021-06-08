@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using AdvancedConsole.Commands.CommandParsing;
 using AdvancedConsole.Commands.Modules;
@@ -35,40 +34,57 @@ namespace AdvancedConsole.Commands
         {
             Modules.Add(new ReflectiveModuleBuilder(), typeof(T));
         }
-        
-        public void StartListeningAsync()
-        {
-            if(IsListening) return;
-            IsListening = true;
-            ListeningTask = new Task(Listen);
-        }
-        public void StartListeningSync()
+        public void StartListening(bool wait = true)
         {
             if(IsListening) return;
             IsListening = true;
             ListeningTask = new Task(Listen);
             ListeningTask.Start();
+            if(wait) Wait();
+        }
+        public void Wait()
+        {
             ListeningTask.Wait();
         }
 
         public void StopListening()
         {
-            
+            IsListening = false;
+        }
+
+        public void ExecuteProcedure(string command)
+        {
+            string[] tokens = CommandParser.Parse(command);
+            Modules.Walk(tokens, (args, node) =>
+            {
+                if (node is not Command commandNode) return;
+                IEnumerable<object>[] parsedArgs = TypesParser.Parse(args);
+                commandNode.TryExecute(parsedArgs, out object _);
+            });
+        }
+
+        public T TryExecuteFunction<T>(string command)
+        {
+            string[] tokens = CommandParser.Parse(command);
+            Type resultType = typeof(T);
+            T result = default;
+            Modules.Walk(tokens, (args, node) =>
+            {
+                if (node is not Command commandNode) return;
+                if (commandNode.Output != resultType) return;
+                IEnumerable<object>[] parsedArgs = TypesParser.Parse(args);
+                if (commandNode.TryExecute(parsedArgs, out object executionResult)) result = (T)executionResult;
+            });
+            return result;
         }
         private void Listen()
         {
             while (IsListening)
             {
                 string readCommand = Reader.ReadCommand();
-                CommandToken commandToken = CommandParser.Parse(readCommand);
                 try
                 {
-                    Modules.Walk(commandToken.Path, (args, node) =>
-                    {
-                        if (node is not Command command) return;
-                        IEnumerable<object>[] parsedArgs = TypesParser.Parse(args);
-                        command.TryExecute(parsedArgs);
-                    });
+                    ExecuteProcedure(readCommand);
                 }
                 catch (Exception e)
                 {

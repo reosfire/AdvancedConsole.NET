@@ -7,9 +7,9 @@
         {
             
         }
-        public CommandToken Parse(string command)
+        public string[] Parse(string command)
         {
-            return new CommandToken(command.Split());
+            return command.Split();
         }
     }
 }

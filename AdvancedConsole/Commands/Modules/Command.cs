@@ -16,9 +16,14 @@ namespace AdvancedConsole.Commands.Modules
         public ParameterInfo[] InputParameters => Method.GetParameters();
         public Type Output => Method.ReturnType;
 
-        public bool TryExecute(IEnumerable<object>[] argsVariants)
+        public bool TryExecute(IEnumerable<object>[] argsVariants, out object executionResult)
         {
-            if (argsVariants.Length != InputParameters.Length) return false;
+            bool IsNullable(Type type) => Nullable.GetUnderlyingType(type) != null;
+            if (argsVariants.Length != InputParameters.Length)
+            {
+                executionResult = null;
+                return false;
+            }
             object[] args = new object[InputParameters.Length];
             bool allMatched = true;
             for (int i = 0; i < InputParameters.Length; i++)
@@ -36,21 +41,38 @@ namespace AdvancedConsole.Commands.Modules
                 }
                 if (!matched)
                 {
-                    allMatched = false;
-                    break;
+                    if (InputParameters[i].HasDefaultValue)
+                    {
+                        args[i] = InputParameters[i].DefaultValue;
+                    }
+                    else if (IsNullable(requiredType))
+                    {
+                        args[i] = null;
+                    }
+                    else
+                    {
+                        allMatched = false;
+                        break;   
+                    }
                 }
             }
 
-            if (allMatched) Execute(args);
-            return allMatched;
+            if (allMatched)
+            {
+                executionResult = Execute(args);
+                return true;
+            }
+
+            executionResult = null;
+            return false;
         }
-        public void Execute(object[] args)
+        public object Execute(object[] args)
         {
-            Method.Invoke(Activator.CreateInstance(Method.DeclaringType),args);
+            return Method.Invoke(Activator.CreateInstance(Method.DeclaringType),args);
         }
-        public void Execute()
+        public object Execute()
         {
-            Method.Invoke(Activator.CreateInstance(Method.DeclaringType),new object[0]);
+            return Method.Invoke(Activator.CreateInstance(Method.DeclaringType),new object[0]);
         }
 
         public class Builder

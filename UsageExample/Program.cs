@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using AdvancedConsole.Commands;
 using AdvancedConsole.Commands.Attributes;
 
@@ -15,7 +12,10 @@ namespace UsageExample
         private static void Main()
         {
             Listener.AddModule<Commands>();
-            Listener.StartListeningSync();
+            Listener.StartListening(false);
+            string tryExecuteFunction = Listener.TryExecuteFunction<string>("run reverse abcdefgh");
+            Console.WriteLine(tryExecuteFunction);
+            Listener.Wait();
         }
     }
     
@@ -29,13 +29,25 @@ namespace UsageExample
         {
             Console.WriteLine("Hello world!");
         }
-        [Command(Name = "Sas")]
-        public void GetNumbersBefore(int first, int second)
+        [Command(Name = "reverse")]
+        public string Function(string input)
         {
-            IEnumerable<int> enumerable = Enumerable.Range(first,second);
-            StringBuilder builder = new StringBuilder();
-            builder.AppendJoin(", ", enumerable);
-            Console.WriteLine(builder);
+            return new StringBuilder().AppendJoin("", input.Reverse()).ToString();
+        }
+        [Command(Name = "MM")]
+        public void MultiMatch(string input)
+        {
+            Console.WriteLine(input);
+        }
+
+        [Module(Name = "MM")]
+        public class MultiMatchClass
+        {
+            [Command(Name = "something")]
+            public void MultiMatch()
+            {
+                Console.WriteLine("something2");
+            }
         }
     }
 }
