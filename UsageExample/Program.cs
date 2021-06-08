@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,19 +24,17 @@ namespace UsageExample
     class Commands
     {
         [Command(Name = "HelloWorld")]
+        [Alias("HW")]
         public void HelloWorld()
         {
             Console.WriteLine("Hello world!");
         }
-        [Command(Name = "HelloWorld")]
-        public void GetNumbersBefore(int i)
+        [Command(Name = "Sas")]
+        public void GetNumbersBefore(int first, int second)
         {
-            IEnumerable enumerable = Enumerable.Range(0,i);
+            IEnumerable<int> enumerable = Enumerable.Range(first,second);
             StringBuilder builder = new StringBuilder();
-            foreach(int num in enumerable)
-            {
-                builder.AppendJoin(", ", num);
-            }
+            builder.AppendJoin(", ", enumerable);
             Console.WriteLine(builder);
         }
     }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace AdvancedConsole.Commands.Modules
 {
@@ -35,6 +34,24 @@ namespace AdvancedConsole.Commands.Modules
                         yield return treeNode;
                     }
                 }   
+            }
+        }
+        public static void Walk(this ITreeNode node, ArraySegment<string> path, Action<ArraySegment<string>, ITreeNode> walker)
+        {
+            walker(path, node);
+            if (path.Count == 0) return;
+            foreach (ITreeNode subNode in node.SubNodes)
+            {
+                if(subNode.Name != path[0] && !subNode.Aliases.Contains(path[0])) continue;
+                subNode.Walk(path[1..], walker);
+            }
+        }
+        public static void Walk(this ITreeNode node, Action<ITreeNode, int> walker, int depth = 0)
+        {
+            walker(node, depth);
+            foreach (ITreeNode subNode in node.SubNodes)
+            {
+                subNode.Walk(walker, depth + 1);
             }
         }
     }

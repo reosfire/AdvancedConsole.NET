@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AdvancedConsole.Commands.CommandParsing;
 using AdvancedConsole.Commands.Modules;
 using AdvancedConsole.Commands.Modules.Building;
+using AdvancedConsole.Commands.TypesParsing;
 using AdvancedConsole.Reading;
 using AdvancedConsole.Reading.Completing;
 
@@ -15,6 +16,7 @@ namespace AdvancedConsole.Commands
         public ICommandReader Reader { get; set; }
         public ModulesTree Modules { get; private set; }
         public IParser CommandParser { get; set; }
+        public TypesParser TypesParser { get; set; }
         private Task ListeningTask { get; set; }
         public bool IsListening { get; private set; }
         
@@ -25,6 +27,8 @@ namespace AdvancedConsole.Commands
             reader.RegisterTabCompleter(new MethodsTreeTabCompleter(Modules));
             Reader = reader;
             CommandParser = new SpacesParser();
+            TypesParser = new TypesParser();
+            TypesParser.AddDefaultTypesParsers();
         }
 
         public void AddModule<T>()
@@ -59,8 +63,12 @@ namespace AdvancedConsole.Commands
                 CommandToken commandToken = CommandParser.Parse(readCommand);
                 try
                 {
-                    List<Command> command = Modules.GetCommands(commandToken).ToList();
-                    if(command.Count > 0) command.First().Execute();
+                    Modules.Walk(commandToken.Path, (args, node) =>
+                    {
+                        if (node is not Command command) return;
+                        IEnumerable<object>[] parsedArgs = TypesParser.Parse(args);
+                        command.TryExecute(parsedArgs);
+                    });
                 }
                 catch (Exception e)
                 {

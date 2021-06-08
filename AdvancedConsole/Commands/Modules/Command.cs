@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AdvancedConsole.Commands.CommandParsing;
+using AdvancedConsole.Commands.TypesParsing;
 
 namespace AdvancedConsole.Commands.Modules
 {
@@ -15,21 +16,41 @@ namespace AdvancedConsole.Commands.Modules
         public ParameterInfo[] InputParameters => Method.GetParameters();
         public Type Output => Method.ReturnType;
 
+        public bool TryExecute(IEnumerable<object>[] argsVariants)
+        {
+            if (argsVariants.Length != InputParameters.Length) return false;
+            object[] args = new object[InputParameters.Length];
+            bool allMatched = true;
+            for (int i = 0; i < InputParameters.Length; i++)
+            {
+                Type requiredType = InputParameters[i].ParameterType;
+                bool matched = false;
+                foreach (object arg in argsVariants[i])
+                {
+                    if (arg.GetType() == requiredType)
+                    {
+                        matched = true;
+                        args[i] = arg;
+                        break;
+                    }
+                }
+                if (!matched)
+                {
+                    allMatched = false;
+                    break;
+                }
+            }
+
+            if (allMatched) Execute(args);
+            return allMatched;
+        }
+        public void Execute(object[] args)
+        {
+            Method.Invoke(Activator.CreateInstance(Method.DeclaringType),args);
+        }
         public void Execute()
         {
             Method.Invoke(Activator.CreateInstance(Method.DeclaringType),new object[0]);
-        }
-        
-        public bool IsMatch(CommandToken token)
-        {
-            Type[] tokenInputParametersTypes = token.InputParametersTypes;
-            if (Output != token.OutputType) return false;
-            if (tokenInputParametersTypes.Length != InputParameters.Length) return false;
-            for (int i = 0; i < tokenInputParametersTypes.Length; i++)
-            {
-                if (tokenInputParametersTypes[i] != InputParameters[i].ParameterType) return false;
-            }
-            return true;
         }
 
         public class Builder

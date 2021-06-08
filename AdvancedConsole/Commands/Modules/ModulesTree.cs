@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Net.Http;
 using AdvancedConsole.Commands.CommandParsing;
 using AdvancedConsole.Commands.Modules.Building;
 
@@ -34,13 +35,14 @@ namespace AdvancedConsole.Commands.Modules
                 }
             }
         }
-        private IEnumerable<Command> GetAllCommands(string[] path)
+        public void Walk(string[] path, Action<ArraySegment<string>, ITreeNode> walker)
         {
-            return GetNodes(path).OfType<Command>();
-        }
-        public IEnumerable<Command> GetCommands(CommandToken token)
-        {
-            return GetAllCommands(token.Path).Where(command => command.IsMatch(token));
+            if(path.Length == 0) return;
+            foreach (ITreeNode treeNode in Nodes)
+            {
+                if(treeNode.Name != path[0] && !treeNode.Aliases.Contains(path[0])) continue;
+                treeNode.Walk(path[1..], walker);
+            }
         }
     }
 }
