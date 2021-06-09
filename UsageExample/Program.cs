@@ -23,7 +23,7 @@ namespace UsageExample
     [Alias("run")]
     class Commands
     {
-        [Command(Name = "HelloWorld")]
+        [Command]
         [Alias("HW")]
         public void HelloWorld()
         {

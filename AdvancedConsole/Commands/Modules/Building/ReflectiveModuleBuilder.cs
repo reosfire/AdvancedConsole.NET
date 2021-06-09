@@ -20,7 +20,8 @@ namespace AdvancedConsole.Commands.Modules.Building
             {
                 CommandAttribute commandAttribute = methodInfo.GetCustomAttribute<CommandAttribute>();
                 if (commandAttribute is null) continue;
-                Command.Builder commandBuilder = new Command.Builder().SetName(commandAttribute.Name);
+                Command.Builder commandBuilder = new ();
+                commandBuilder.SetName(commandAttribute.Name ?? methodInfo.Name);
                 commandBuilder.SetMethod(methodInfo);
                 foreach (AliasAttribute aliasAttribute in methodInfo.GetCustomAttributes<AliasAttribute>())
                 {

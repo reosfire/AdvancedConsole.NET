@@ -6,5 +6,14 @@ namespace AdvancedConsole.Commands.Attributes
     public class CommandAttribute : Attribute
     {
         public string Name { get; set; }
+
+        public CommandAttribute()
+        {
+            
+        }
+        public CommandAttribute(string name)
+        {
+            Name = name;
+        }
     }
 }
