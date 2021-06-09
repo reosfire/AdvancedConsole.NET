@@ -23,6 +23,17 @@ namespace UsageExample
     [Alias("run")]
     class Commands
     {
+        private int _temporaryField = 0;
+        private int TemporaryProperty { get; set; } = 0;
+
+        [Command]
+        public void GetTemporary()
+        {
+            Console.WriteLine(_temporaryField);
+            Console.WriteLine(TemporaryProperty);
+            _temporaryField++;
+            TemporaryProperty++;
+        }
         [Command]
         [Alias("HW")]
         public void HelloWorld()

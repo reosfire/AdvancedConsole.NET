@@ -15,6 +15,19 @@ namespace AdvancedConsole.Commands.Modules
         public MethodInfo Method { get; private set; }
         public ParameterInfo[] InputParameters => Method.GetParameters();
         public Type Output => Method.ReturnType;
+        private object _executionContextCache = null;
+
+        private object ExecutionContext
+        {
+            get
+            {
+                _executionContextCache = _executionContextCache ?? Activator.CreateInstance(Method.DeclaringType);
+                return _executionContextCache;
+            }
+            set => _executionContextCache = value;
+        }
+
+        public void ClearExecutionContextCache() => ExecutionContext = null;
 
         public bool TryExecute(IEnumerable<object>[] argsVariants, out object executionResult)
         {
@@ -68,11 +81,11 @@ namespace AdvancedConsole.Commands.Modules
         }
         public object Execute(object[] args)
         {
-            return Method.Invoke(Activator.CreateInstance(Method.DeclaringType),args);
+            return Method.Invoke(ExecutionContext,args);
         }
         public object Execute()
         {
-            return Method.Invoke(Activator.CreateInstance(Method.DeclaringType),new object[0]);
+            return Method.Invoke(ExecutionContext,new object[0]);
         }
 
         public class Builder

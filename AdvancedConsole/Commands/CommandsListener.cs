@@ -18,6 +18,7 @@ namespace AdvancedConsole.Commands
         public TypesParser TypesParser { get; set; }
         private Task ListeningTask { get; set; }
         public bool IsListening { get; private set; }
+        private Dictionary<Type, object> ExecutionContextsCache { get; }
         
         public CommandsListener()
         {
@@ -28,6 +29,7 @@ namespace AdvancedConsole.Commands
             CommandParser = new SpacesParser();
             TypesParser = new TypesParser();
             TypesParser.AddDefaultTypesParsers();
+            ExecutionContextsCache = new Dictionary<Type, object>();
         }
 
         public void AddModule<T>()
@@ -50,6 +52,10 @@ namespace AdvancedConsole.Commands
         public void StopListening()
         {
             IsListening = false;
+        }
+        public void ClearExecutionContextsCache()
+        {
+            ExecutionContextsCache.Clear();
         }
 
         public void ExecuteProcedure(string command)
