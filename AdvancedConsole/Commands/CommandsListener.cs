@@ -65,21 +65,21 @@ namespace AdvancedConsole.Commands
             {
                 if (node is not Command commandNode) return;
                 IEnumerable<object>[] parsedArgs = TypesParser.Parse(args);
-                commandNode.TryExecute(parsedArgs, out object _);
+                commandNode.TryExecute(parsedArgs,ExecutionContextsCache, out object _);
             });
         }
 
-        public T TryExecuteFunction<T>(string command)
+        public TOutput TryExecuteFunction<TOutput>(string command)
         {
             string[] tokens = CommandParser.Parse(command);
-            Type resultType = typeof(T);
-            T result = default;
+            Type resultType = typeof(TOutput);
+            TOutput result = default;
             Modules.Walk(tokens, (args, node) =>
             {
                 if (node is not Command commandNode) return;
                 if (commandNode.Output != resultType) return;
                 IEnumerable<object>[] parsedArgs = TypesParser.Parse(args);
-                if (commandNode.TryExecute(parsedArgs, out object executionResult)) result = (T)executionResult;
+                if (commandNode.TryExecute(parsedArgs,ExecutionContextsCache, out object executionResult)) result = (TOutput)executionResult;
             });
             return result;
         }

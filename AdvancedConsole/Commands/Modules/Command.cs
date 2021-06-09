@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using AdvancedConsole.Commands.CommandParsing;
-using AdvancedConsole.Commands.TypesParsing;
+using System.Threading;
 
 namespace AdvancedConsole.Commands.Modules
 {
@@ -15,21 +13,8 @@ namespace AdvancedConsole.Commands.Modules
         public MethodInfo Method { get; private set; }
         public ParameterInfo[] InputParameters => Method.GetParameters();
         public Type Output => Method.ReturnType;
-        private object _executionContextCache = null;
 
-        private object ExecutionContext
-        {
-            get
-            {
-                _executionContextCache = _executionContextCache ?? Activator.CreateInstance(Method.DeclaringType);
-                return _executionContextCache;
-            }
-            set => _executionContextCache = value;
-        }
-
-        public void ClearExecutionContextCache() => ExecutionContext = null;
-
-        public bool TryExecute(IEnumerable<object>[] argsVariants, out object executionResult)
+        public bool TryExecute(IEnumerable<object>[] argsVariants, Dictionary<Type, object> executionContextsCache, out object executionResult)
         {
             bool IsNullable(Type type) => Nullable.GetUnderlyingType(type) != null;
             if (argsVariants.Length != InputParameters.Length)
@@ -72,20 +57,24 @@ namespace AdvancedConsole.Commands.Modules
 
             if (allMatched)
             {
-                executionResult = Execute(args);
+                executionResult = Execute(args, executionContextsCache);
                 return true;
             }
 
             executionResult = null;
             return false;
         }
-        public object Execute(object[] args)
+        public object Execute(object[] args, Dictionary<Type, object> executionContextsCache)
         {
-            return Method.Invoke(ExecutionContext,args);
+            Type declaringType = Method.DeclaringType;
+            if (declaringType is null) throw new Exception("declaring type can not be null to execute command"); //TODO check this when building tree
+            if (!executionContextsCache.ContainsKey(declaringType))
+                executionContextsCache.Add(declaringType, Activator.CreateInstance(declaringType));
+            return Method.Invoke(executionContextsCache[declaringType],args);
         }
-        public object Execute()
+        public object Execute(Dictionary<Type, object> executionContextsCache)
         {
-            return Method.Invoke(ExecutionContext,new object[0]);
+            return Execute(new object[0], executionContextsCache);
         }
 
         public class Builder
