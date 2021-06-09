@@ -64,8 +64,10 @@ namespace AdvancedConsole.Commands
             Modules.Walk(tokens, (args, node) =>
             {
                 if (node is not Command commandNode) return;
-                IEnumerable<object>[] parsedArgs = TypesParser.Parse(args);
-                commandNode.TryExecute(parsedArgs,ExecutionContextsCache, out object _);
+                if (commandNode.TryParseArgs(args.ToArray(), TypesParser, out object[] parsedArgs))
+                {
+                    commandNode.Execute(parsedArgs, ExecutionContextsCache);
+                }
             });
         }
 
@@ -78,8 +80,10 @@ namespace AdvancedConsole.Commands
             {
                 if (node is not Command commandNode) return;
                 if (commandNode.Output != resultType) return;
-                IEnumerable<object>[] parsedArgs = TypesParser.Parse(args);
-                if (commandNode.TryExecute(parsedArgs,ExecutionContextsCache, out object executionResult)) result = (TOutput)executionResult;
+                if (commandNode.TryParseArgs(args.ToArray(), TypesParser, out object[] parsedArgs))
+                {
+                    result = (TOutput)commandNode.Execute(parsedArgs, ExecutionContextsCache);
+                }
             });
             return result;
         }

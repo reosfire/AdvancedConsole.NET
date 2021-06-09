@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
+using AdvancedConsole.Commands.TypesParsing;
 
 namespace AdvancedConsole.Commands.Modules
 {
@@ -14,55 +15,41 @@ namespace AdvancedConsole.Commands.Modules
         public ParameterInfo[] InputParameters => Method.GetParameters();
         public Type Output => Method.ReturnType;
 
-        public bool TryExecute(IEnumerable<object>[] argsVariants, Dictionary<Type, object> executionContextsCache, out object executionResult)
+        
+        public bool TryParseArgs(string[] args, TypesParser parser, out object[] parsedArgs)
         {
             bool IsNullable(Type type) => Nullable.GetUnderlyingType(type) != null;
-            if (argsVariants.Length != InputParameters.Length)
+            if (args.Length != InputParameters.Length)
             {
-                executionResult = null;
+                parsedArgs = null;
                 return false;
             }
-            object[] args = new object[InputParameters.Length];
+            parsedArgs = new object[InputParameters.Length];
             bool allMatched = true;
             for (int i = 0; i < InputParameters.Length; i++)
             {
                 Type requiredType = InputParameters[i].ParameterType;
-                bool matched = false;
-                foreach (object arg in argsVariants[i])
-                {
-                    if (arg.GetType() == requiredType)
-                    {
-                        matched = true;
-                        args[i] = arg;
-                        break;
-                    }
-                }
-                if (!matched)
+                bool matched = parser.TryParse(requiredType, args[i], out object arg);
+                if (matched) parsedArgs[i] = arg;
+                else
                 {
                     if (InputParameters[i].HasDefaultValue)
                     {
-                        args[i] = InputParameters[i].DefaultValue;
+                        parsedArgs[i] = InputParameters[i].DefaultValue;
                     }
                     else if (IsNullable(requiredType))
                     {
-                        args[i] = null;
+                        parsedArgs[i] = null;
                     }
                     else
                     {
                         allMatched = false;
                         break;   
-                    }
+                    }   
                 }
             }
 
-            if (allMatched)
-            {
-                executionResult = Execute(args, executionContextsCache);
-                return true;
-            }
-
-            executionResult = null;
-            return false;
+            return allMatched;
         }
         public object Execute(object[] args, Dictionary<Type, object> executionContextsCache)
         {
