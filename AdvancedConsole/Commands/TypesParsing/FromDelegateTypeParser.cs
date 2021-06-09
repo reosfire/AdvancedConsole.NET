@@ -1,9 +1,8 @@
 ﻿namespace AdvancedConsole.Commands.TypesParsing
 {
     public delegate bool TryParseDelegate<T>(string input, out T result);
-    public delegate bool TryParseDelegate(string input, out object result);
 
-    public class FromDelegateTypeParser<T> : ITypeParser
+    public class FromDelegateTypeParser<T> : ITypeParser<T>
     {
         private TryParseDelegate<T> TryParseDelegate { get; }
 
@@ -12,11 +11,9 @@
             TryParseDelegate = tryParseDelegate;
         }
 
-        public bool TryParse(string input, out object result)
+        public bool TryParse(string input, out T result)
         {
-            bool isParsed = TryParseDelegate(input, out T parseResult);
-            result = parseResult;
-            return isParsed;
+            return TryParseDelegate(input, out result);
         }
     }
 }

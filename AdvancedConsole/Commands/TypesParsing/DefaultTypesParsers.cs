@@ -7,11 +7,20 @@ namespace AdvancedConsole.Commands.TypesParsing
     {
         public static void AddDefaultTypesParsers(this TypesParser parser)
         {
-            parser.AddParser(new FromDelegateTypeParser<bool>(bool.TryParse));
-            parser.AddParser(new FromDelegateTypeParser<byte>(byte.TryParse));
-            parser.AddParser(new FromDelegateTypeParser<sbyte>(sbyte.TryParse));
-            parser.AddParser(new FromDelegateTypeParser<int>(int.TryParse));
-            parser.AddParser(new FromDelegateTypeParser<string>(StringParser));
+            parser.AddParser<bool>(bool.TryParse);
+            parser.AddParser<byte>(byte.TryParse);
+            parser.AddParser<sbyte>(sbyte.TryParse);
+            parser.AddParser<ushort>(ushort.TryParse);
+            parser.AddParser<short>(short.TryParse);
+            parser.AddParser<int>(int.TryParse);
+            parser.AddParser<uint>(uint.TryParse);
+            parser.AddParser<long>(long.TryParse);
+            parser.AddParser<ulong>(ulong.TryParse);
+            parser.AddParser<float>(float.TryParse);
+            parser.AddParser<double>(double.TryParse);
+            parser.AddParser<decimal>(decimal.TryParse);
+            parser.AddParser<char>(char.TryParse);
+            parser.AddParser<string>(StringParser);
         }
 
         private static bool StringParser(string input, out string result)

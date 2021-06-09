@@ -6,12 +6,12 @@ namespace AdvancedConsole.Commands.TypesParsing
     public class TypesParser
     {
         private Dictionary<Type, ITypeParser> TypeParsers { get; set; } = new ();
-
-        public void AddParser<T>(FromDelegateTypeParser<T> parser)
+        
+        public void AddParser<T>(TryParseDelegate<T> parser)
         {
-            TypeParsers.Add(typeof(T), parser);
+            AddParser(new FromDelegateTypeParser<T>(parser));
         }
-        public void AddParser<T>(ITypeParser parser)
+        public void AddParser<T>(ITypeParser<T> parser)
         {
             TypeParsers.Add(typeof(T), parser);
         }
