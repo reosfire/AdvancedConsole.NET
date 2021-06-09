@@ -35,6 +35,15 @@ namespace UsageExample
             TemporaryProperty++;
         }
         [Command]
+        public void QuotedStrings(string first, string second)
+        {
+            ConsoleColor foregroundColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(first);
+            Console.WriteLine(second);
+            Console.ForegroundColor = foregroundColor;
+        }
+        [Command]
         [Alias("HW")]
         public void HelloWorld()
         {
