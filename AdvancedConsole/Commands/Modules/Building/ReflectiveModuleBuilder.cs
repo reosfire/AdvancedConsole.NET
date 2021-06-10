@@ -46,7 +46,7 @@ namespace AdvancedConsole.Commands.Modules.Building
                 {
                     moduleBuilder.AddAlias(aliasAttribute.Value);
                 }
-                module = moduleBuilder.SetName(moduleAttribute.Name).Build();
+                module = moduleBuilder.SetName(moduleAttribute.Name ?? type.Name).Build();
                 previous.AddSubModule(module);
                 module = new Module.Builder().AddSubModule(module).Build();
             }

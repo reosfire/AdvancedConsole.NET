@@ -3,7 +3,7 @@ using AdvancedConsole.Commands.Attributes;
 
 namespace UsageExample
 {
-    [Module(Name = "Calculator")]
+    [Module]
     public class Calculator
     {
         private double _temp = 0;
