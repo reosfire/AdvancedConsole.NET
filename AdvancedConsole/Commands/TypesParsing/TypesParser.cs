@@ -45,7 +45,11 @@ namespace AdvancedConsole.Commands.TypesParsing
 
         public bool TryParse(Type type, string input, out object parsed)
         {
-            if (!TypeParsers.ContainsKey(type)) throw new ArgumentException("Can't find suitable parser");
+            if (!TypeParsers.ContainsKey(type))
+            {
+                parsed = null;
+                return false;
+            }
             foreach (ITypeParser parser in TypeParsers[type])
             {
                 if (parser.TryParse(input, out object parseResult))

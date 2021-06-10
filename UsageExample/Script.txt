@@ -1,0 +1,5 @@
+﻿Calculator Add 1083,3
+Calculator Subtract 55
+Calculator Multiply 55,5
+Calculator Pow 2
+Calculator Divide 3

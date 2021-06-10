@@ -12,23 +12,19 @@ namespace AdvancedConsole.Commands
 {
     public class CommandsListener
     {
-        public ICommandReader Reader { get; set; }
         public ModulesTree Modules { get; private set; }
         public IParser CommandParser { get; set; }
         public TypesParser TypesParser { get; set; }
-        private Task ListeningTask { get; set; }
         public bool IsListening { get; private set; }
+        private ICommandReader Reader { get; set; }
+        private Task ListeningTask { get; set; }
         private Dictionary<Type, object> ExecutionContextsCache { get; }
-        
+
         public CommandsListener()
         {
             Modules = new ModulesTree();
-            CompletableConsoleReader reader = new();
-            reader.RegisterTabCompleter(new MethodsTreeTabCompleter(Modules));
-            Reader = reader;
             CommandParser = new SpacesParser();
-            TypesParser = new TypesParser();
-            TypesParser.AddDefaultTypesParsers();
+            TypesParser = new DefaultTypesParser();
             ExecutionContextsCache = new Dictionary<Type, object>();
         }
 
@@ -36,13 +32,20 @@ namespace AdvancedConsole.Commands
         {
             Modules.Add(new ReflectiveModuleBuilder(), typeof(T));
         }
-        public void StartListening(bool wait = true)
+        public void StartListening(ICommandReader reader, bool wait = true)
         {
             if(IsListening) return;
-            IsListening = true;
+            Reader = reader;
             ListeningTask = new Task(Listen);
             ListeningTask.Start();
+            IsListening = true;
             if(wait) Wait();
+        }
+        public void StartListening(bool wait = true)
+        {
+            CompletableConsoleReader reader = new CompletableConsoleReader();
+            reader.RegisterTabCompleter(new MethodsTreeTabCompleter(Modules));
+            StartListening(reader, wait);
         }
         public void Wait()
         {
@@ -91,10 +94,15 @@ namespace AdvancedConsole.Commands
         {
             while (IsListening)
             {
-                string readCommand = Reader.ReadCommand();
                 try
                 {
+                    string readCommand = Reader.ReadCommand();
                     ExecuteProcedure(readCommand);
+                }
+                catch (ReadingCancellationToken e)
+                {
+                    if(Reader is IDisposable disposableReader) disposableReader.Dispose();
+                    StopListening();
                 }
                 catch (Exception e)
                 {

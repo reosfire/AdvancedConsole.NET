@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using AdvancedConsole.Commands;
 using AdvancedConsole.Commands.Attributes;
-using AdvancedConsole.Commands.Modules;
+using AdvancedConsole.Reading;
 
 namespace UsageExample
 {
@@ -15,10 +15,10 @@ namespace UsageExample
         {
             Listener.AddModule<Commands>();
             Listener.AddModule<Calculator>();
-            Listener.StartListening(false);
+            Listener.StartListening(new ScriptReader("../../../Script.txt"),true);
             string tryExecuteFunction = Listener.TryExecuteFunction<string>("run reverse abcdefgh");
             Console.WriteLine(tryExecuteFunction);
-            Listener.Wait();
+            Listener.StartListening();
         }
     }
 
