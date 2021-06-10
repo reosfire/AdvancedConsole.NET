@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AdvancedConsole.Commands;
 using AdvancedConsole.Commands.Attributes;
 using AdvancedConsole.Reading;
@@ -10,19 +7,20 @@ namespace UsageExample
 {
     internal static class Program
     {
-        private static CommandsListener Listener { get; set; } = new CommandsListener();
+        public static CommandsListener Listener { get; set; } = new CommandsListener();
 
         private static void Main()
         {
             Listener.AddModule<Commands>();
             Listener.AddModule<Calculator>();
+            Listener.AddModule<TextModule>();
             Listener.StartListening(new ScriptReader("../../../Script.txt"),true);
-            string tryExecuteFunction = Listener.TryExecuteFunction<string>("run reverse abcdefgh");
-            Console.WriteLine(tryExecuteFunction);
+            if(Listener.TryExecuteFunction<string>("Text Reverse abcdefgh", out string result)) 
+                Console.WriteLine(result);
             Listener.StartListening();
         }
     }
-
+    
     [Module(Name = "execute")]
     [Alias("run")]
     public class Commands
@@ -53,12 +51,6 @@ namespace UsageExample
         public void HelloWorld()
         {
             Console.WriteLine("Hello world!");
-        }
-
-        [Command(Name = "reverse")]
-        public string Function(string input)
-        {
-            return new StringBuilder().AppendJoin("", input.Reverse()).ToString();
         }
 
         [Command(Name = "MM")]

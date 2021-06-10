@@ -19,17 +19,20 @@ namespace AdvancedConsole.Reading
         public event Action<ConsoleKeyInfo> WritableCharacterInputted;
         public event Action<ConsoleKeyInfo> UnwritableCharacterInputted;
         protected List<ITabCompleter> Completers { get; } = new List<ITabCompleter>();
-        protected List<string> CurrentCompletionCompletions { get; private set; }
+        protected List<string> CurrentCompletions { get; private set; }
         protected int CompleterIndex { get; set; }
         protected StringBuilder Buffer { get; private set; } = new StringBuilder();
         protected int LastBufferLength { get; private set; }
         protected int LastInsertionStart { get; set; }
         protected int LastInsertionLength { get; set; }
         protected int CursorLeft { get; set; }
-        protected List<string> History { get; set; } = new List<string>();
-        protected int HistoryIndex = 0;
+        protected LinkedList<StringBuilder> History { get; set; } = new();
+        protected LinkedListNode<StringBuilder> CurrentHistoryElement;
+        protected StringBuilder BeforeHistorySelection;
+        protected int BeforeHistorySelectionCursorLeft;
         protected ConsoleKeyInfo LastKey { get; private set; }
         public bool IsReading { get; private set; }
+
         public CompletableConsoleReader()
         {
             EnterPressed += OnEnterPressed;
@@ -44,6 +47,7 @@ namespace AdvancedConsole.Reading
         {
             Completers.Add(tabCompleter);
         }
+
         private void UpdateConsole()
         {
             Console.CursorVisible = false;
@@ -90,10 +94,11 @@ namespace AdvancedConsole.Reading
                         UpArrowPressed?.Invoke();
                         break;
                     default:
-                        {
-                            if (IsCharacterWritable(consoleKeyInfo.KeyChar)) WritableCharacterInputted?.Invoke(consoleKeyInfo);
-                            else UnwritableCharacterInputted?.Invoke(consoleKeyInfo);
-                        }
+                    {
+                        if (IsCharacterWritable(consoleKeyInfo.KeyChar))
+                            WritableCharacterInputted?.Invoke(consoleKeyInfo);
+                        else UnwritableCharacterInputted?.Invoke(consoleKeyInfo);
+                    }
                         break;
                 }
 
@@ -114,13 +119,16 @@ namespace AdvancedConsole.Reading
         protected virtual void OnEnterPressed()
         {
             IsReading = false;
-            History.Add(Buffer.ToString());
-            HistoryIndex = 0;
+            if (Buffer.Length != 0 && !History.Contains(Buffer))
+                History.AddFirst(Buffer);
+            CurrentHistoryElement = null;
         }
+
         private IEnumerable<string> CompletionFor(string input, int index)
         {
             return Completers.SelectMany(tabCompleter => tabCompleter.GetCompletion(input, index));
         }
+
         protected virtual void OnTabPressed()
         {
             if (LastKey.Key != ConsoleKey.Tab)
@@ -133,9 +141,10 @@ namespace AdvancedConsole.Reading
             {
                 Buffer.Remove(LastInsertionStart, LastInsertionLength);
             }
-            CurrentCompletionCompletions = CompletionFor(Buffer.ToString(), CursorLeft).ToList();
-            if(CurrentCompletionCompletions.Count == 0) return;
-            string completion = CurrentCompletionCompletions[CompleterIndex % CurrentCompletionCompletions.Count];
+
+            CurrentCompletions = CompletionFor(Buffer.ToString(), CursorLeft).ToList();
+            if (CurrentCompletions.Count == 0) return;
+            string completion = CurrentCompletions[CompleterIndex % CurrentCompletions.Count];
             CursorLeft -= LastInsertionLength;
             Buffer.Insert(CursorLeft, completion);
 
@@ -152,6 +161,7 @@ namespace AdvancedConsole.Reading
             Buffer.Insert(CursorLeft, c.KeyChar);
             CursorLeft++;
         }
+
         protected virtual void OnBackspacePressed()
         {
             if (Buffer.Length > 0 && Console.CursorLeft > 0) Buffer.Remove(Console.CursorLeft - 1, 1);
@@ -160,21 +170,31 @@ namespace AdvancedConsole.Reading
 
         protected virtual void OnUpArrowPressed()
         {
-            if(History.Count == 0) return;
-            HistoryIndex = Math.Max(0, HistoryIndex);
-            Buffer.Clear().Append(History[HistoryIndex % History.Count]);
+            if (CurrentHistoryElement is null)
+            {
+                BeforeHistorySelection = Buffer;
+                BeforeHistorySelectionCursorLeft = CursorLeft;
+            }
+
+            CurrentHistoryElement = CurrentHistoryElement?.Next ?? History.First;
+            if (CurrentHistoryElement is null) return;
+            Buffer = CurrentHistoryElement.Value;
             CursorLeft = Buffer.Length;
-            HistoryIndex++;
         }
+
         protected virtual void OnDownArrowPressed()
         {
-            if (History.Count == 0) return;
-            if (HistoryIndex >= 0)
+            if (CurrentHistoryElement is null) return;
+            CurrentHistoryElement = CurrentHistoryElement.Previous;
+            if (CurrentHistoryElement is null)
             {
-                Buffer.Clear().Append(History[HistoryIndex % History.Count]);
-                CursorLeft = Buffer.Length;
+                Buffer = BeforeHistorySelection;
+                CursorLeft = BeforeHistorySelectionCursorLeft;
+                return;
             }
-            HistoryIndex--;
+
+            Buffer = CurrentHistoryElement.Value;
+            CursorLeft = Buffer.Length;
         }
     }
 }

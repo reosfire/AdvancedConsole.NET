@@ -74,21 +74,24 @@ namespace AdvancedConsole.Commands
             });
         }
 
-        public TOutput TryExecuteFunction<TOutput>(string command)
+        public bool TryExecuteFunction<TOutput>(string command, out TOutput result)
         {
             string[] tokens = CommandParser.Parse(command);
             Type resultType = typeof(TOutput);
-            TOutput result = default;
+            TOutput lastResult = default;
+            bool isExecuted = false;
             Modules.Walk(tokens, (args, node) =>
             {
                 if (node is not Command commandNode) return;
                 if (commandNode.Output != resultType) return;
                 if (commandNode.TryParseArgs(args.ToArray(), TypesParser, out object[] parsedArgs))
                 {
-                    result = (TOutput)commandNode.Execute(parsedArgs, ExecutionContextsCache);
+                    lastResult = (TOutput)commandNode.Execute(parsedArgs, ExecutionContextsCache);
+                    isExecuted = true;
                 }
             });
-            return result;
+            result = lastResult;
+            return isExecuted;
         }
         private void Listen()
         {
