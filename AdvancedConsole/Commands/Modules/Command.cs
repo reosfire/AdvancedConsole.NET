@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using AdvancedConsole.Commands.TypesParsing;
 
 namespace AdvancedConsole.Commands.Modules
 {
@@ -13,44 +12,8 @@ namespace AdvancedConsole.Commands.Modules
         public MethodInfo Method { get; private set; }
         public ParameterInfo[] InputParameters => Method.GetParameters();
         public Type Output => Method.ReturnType;
-
         
-        public bool TryParseArgs(string[] args, TypesParser parser, out object[] parsedArgs)
-        {
-            bool IsNullable(Type type) => Nullable.GetUnderlyingType(type) != null;
-            if (args.Length != InputParameters.Length)
-            {
-                parsedArgs = null;
-                return false;
-            }
-            parsedArgs = new object[InputParameters.Length];
-            bool allMatched = true;
-            for (int i = 0; i < InputParameters.Length; i++)
-            {
-                Type requiredType = InputParameters[i].ParameterType;
-                bool matched = parser.TryParse(requiredType, args[i], out object arg);
-                if (matched) parsedArgs[i] = arg;
-                else
-                {
-                    if (InputParameters[i].HasDefaultValue)
-                    {
-                        parsedArgs[i] = InputParameters[i].DefaultValue;
-                    }
-                    else if (IsNullable(requiredType))
-                    {
-                        parsedArgs[i] = null;
-                    }
-                    else
-                    {
-                        allMatched = false;
-                        break;   
-                    }   
-                }
-            }
-
-            return allMatched;
-        }
-        public object Execute(object[] args, Dictionary<Type, object> executionContextsCache)
+        public object Execute(object[] args, Dictionary<Type, object> executionContextsCache) //TODO command shouldn't mutate parameter
         {
             Type declaringType = Method.DeclaringType;
             if (declaringType is null) throw new Exception("declaring type can not be null to execute command"); //TODO check this when building tree

@@ -13,7 +13,7 @@ namespace AdvancedConsole.Commands
     public class CommandsListener
     {
         public ModulesTree Modules { get; private set; }
-        public IParser CommandParser { get; set; }
+        public ICommandParser CommandParser { get; set; }
         public TypesParser TypesParser { get; set; }
         public bool IsListening { get; private set; }
         private ICommandReader Reader { get; set; }
@@ -23,8 +23,8 @@ namespace AdvancedConsole.Commands
         public CommandsListener()
         {
             Modules = new ModulesTree();
-            CommandParser = new SpacesParser();
             TypesParser = new DefaultTypesParser();
+            CommandParser = new SpacesCommandParser(TypesParser);
             ExecutionContextsCache = new Dictionary<Type, object>();
         }
 
@@ -63,11 +63,11 @@ namespace AdvancedConsole.Commands
 
         public void ExecuteProcedure(string command)
         {
-            string[] tokens = CommandParser.Parse(command);
+            string[] tokens = CommandParser.ParseTokens(command);
             Modules.Walk(tokens, (args, node) =>
             {
                 if (node is not Command commandNode) return;
-                if (commandNode.TryParseArgs(args.ToArray(), TypesParser, out object[] parsedArgs))
+                if (CommandParser.TryParseArgs(args.ToArray(), commandNode.InputParameters, out object[] parsedArgs))
                 {
                     commandNode.Execute(parsedArgs, ExecutionContextsCache);
                 }
@@ -76,7 +76,7 @@ namespace AdvancedConsole.Commands
 
         public bool TryExecuteFunction<TOutput>(string command, out TOutput result)
         {
-            string[] tokens = CommandParser.Parse(command);
+            string[] tokens = CommandParser.ParseTokens(command);
             Type resultType = typeof(TOutput);
             TOutput lastResult = default;
             bool isExecuted = false;
@@ -84,7 +84,7 @@ namespace AdvancedConsole.Commands
             {
                 if (node is not Command commandNode) return;
                 if (commandNode.Output != resultType) return;
-                if (commandNode.TryParseArgs(args.ToArray(), TypesParser, out object[] parsedArgs))
+                if (CommandParser.TryParseArgs(args.ToArray(), commandNode.InputParameters, out object[] parsedArgs))
                 {
                     lastResult = (TOutput)commandNode.Execute(parsedArgs, ExecutionContextsCache);
                     isExecuted = true;
