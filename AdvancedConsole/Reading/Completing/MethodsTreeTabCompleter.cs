@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using AdvancedConsole.Commands.CommandParsing;
+﻿using System.Collections.Generic;
+using System.Reflection;
 using AdvancedConsole.Commands.Modules;
 
 namespace AdvancedConsole.Reading.Completing
@@ -24,8 +22,9 @@ namespace AdvancedConsole.Reading.Completing
                 {
                     yield return treeNode.Name;
                 }
+                yield break;
             }
-            else if (currentInput.Length != 0 && words.Length == 1)
+            if (currentInput.Length != 0 && words.Length == 1)
             {
                 foreach (ITreeNode treeNode in Tree.Nodes)
                 {
@@ -54,6 +53,30 @@ namespace AdvancedConsole.Reading.Completing
                     }
                 }
             }
+
+            foreach (string s in GetExplicitArgsCompletion(words, cursorIndex))
+            {
+                yield return s;
+            }
+        }
+
+        private IEnumerable<string> GetExplicitArgsCompletion(string[] words, int cursorIndex)
+        {
+            List<string> result = new ();
+            Tree.Walk(words, (path, node) =>
+            {
+                if(node is not Command commandNode) return;
+                foreach (ParameterInfo inputParameter in commandNode.InputParameters)
+                {
+                    foreach (string pathPart in path)
+                    {
+                        string completion = inputParameter.Name + "=";
+                        if(pathPart.StartsWith(completion)) break;
+                        if(inputParameter.Name.StartsWith(pathPart)) result.Add(inputParameter.Name[pathPart.Length..] + "=");
+                    }
+                }
+            });
+            return result;
         }
     }
 }
