@@ -19,18 +19,14 @@ namespace AdvancedConsole.Reading
         public event Action<ConsoleKeyInfo> WritableCharacterInputted;
         public event Action<ConsoleKeyInfo> UnwritableCharacterInputted;
         protected List<ITabCompleter> Completers { get; } = new List<ITabCompleter>();
-        protected List<string> CurrentCompletions { get; private set; }
-        protected int CompleterIndex { get; set; }
-        protected StringBuilder Buffer { get; private set; } = new StringBuilder();
+        protected TabCompletionSession CompletionSession { get; private set; }
+        protected string Buffer { get; private set; } = "";
         protected int LastBufferLength { get; private set; }
-        protected int LastInsertionStart { get; set; }
-        protected int LastInsertionLength { get; set; }
         protected int CursorLeft { get; set; }
-        protected LinkedList<StringBuilder> History { get; set; } = new();
-        protected LinkedListNode<StringBuilder> CurrentHistoryElement;
-        protected StringBuilder BeforeHistorySelection;
+        protected LinkedList<string> History { get; set; } = new();
+        protected LinkedListNode<string> CurrentHistoryElement;
+        protected string BeforeHistorySelection;
         protected int BeforeHistorySelectionCursorLeft;
-        protected ConsoleKeyInfo LastKey { get; private set; }
         public bool IsReading { get; private set; }
 
         public CompletableConsoleReader()
@@ -56,14 +52,18 @@ namespace AdvancedConsole.Reading
             Console.CursorVisible = true;
         }
 
+        private void UpdateCompletionSession()
+        {
+            CompletionSession = new TabCompletionSession(Completers, Buffer, CursorLeft);
+        }
+
         public string ReadCommand()
         {
             IsReading = true;
-            Buffer = new StringBuilder();
+            Buffer = "";
             LastBufferLength = default(int);
-            LastInsertionStart = default(int);
-            LastInsertionLength = default(int);
             CursorLeft = default(int);
+            UpdateCompletionSession();
 
             while (IsReading)
             {
@@ -101,14 +101,14 @@ namespace AdvancedConsole.Reading
                     }
                         break;
                 }
+                if(consoleKeyInfo.Key != ConsoleKey.Tab) UpdateCompletionSession();
 
                 UpdateConsole();
-                LastKey = consoleKeyInfo;
                 LastBufferLength = Buffer.Length;
             }
 
             Console.WriteLine();
-            return Buffer.ToString();
+            return Buffer;
         }
 
         protected virtual bool IsCharacterWritable(char character)
@@ -123,48 +123,22 @@ namespace AdvancedConsole.Reading
                 History.AddFirst(Buffer);
             CurrentHistoryElement = null;
         }
-
-        private IEnumerable<string> CompletionFor(string input, int index)
-        {
-            return Completers.SelectMany(tabCompleter => tabCompleter.GetCompletion(input, index));
-        }
-
+        
         protected virtual void OnTabPressed()
         {
-            if (LastKey.Key != ConsoleKey.Tab)
-            {
-                CompleterIndex = 0;
-                LastInsertionLength = 0;
-                LastInsertionStart = CursorLeft;
-            }
-            else
-            {
-                Buffer.Remove(LastInsertionStart, LastInsertionLength);
-            }
-
-            CurrentCompletions = CompletionFor(Buffer.ToString(), CursorLeft).ToList();
-            if (CurrentCompletions.Count == 0) return;
-            string completion = CurrentCompletions[CompleterIndex % CurrentCompletions.Count];
-            CursorLeft -= LastInsertionLength;
-            Buffer.Insert(CursorLeft, completion);
-
-            LastInsertionStart = CursorLeft;
-            LastInsertionLength = completion.Length;
-
-            CursorLeft += completion.Length;
-
-            CompleterIndex++;
+            Buffer = CompletionSession.NextCompleteString;
+            CursorLeft = Buffer.Length;
         }
 
         protected virtual void OnWritableCharacterInputted(ConsoleKeyInfo c)
         {
-            Buffer.Insert(CursorLeft, c.KeyChar);
+            Buffer = Buffer.Insert(CursorLeft, new string(c.KeyChar, 1));
             CursorLeft++;
         }
 
         protected virtual void OnBackspacePressed()
         {
-            if (Buffer.Length > 0 && Console.CursorLeft > 0) Buffer.Remove(Console.CursorLeft - 1, 1);
+            if (Buffer.Length > 0 && Console.CursorLeft > 0) Buffer = Buffer.Remove(Console.CursorLeft - 1, 1);
             CursorLeft = Math.Max(CursorLeft - 1, 0);
         }
 

@@ -29,11 +29,11 @@ namespace AdvancedConsole.Reading.Completing
                 foreach (ITreeNode treeNode in Tree.Nodes)
                 {
                     if (treeNode.Name.StartsWith(words[^1]))
-                        yield return treeNode.Name[words[^1].Length..];
+                        yield return treeNode.Name;
                     foreach (string alias in treeNode.Aliases)
                     {
                         if (alias.StartsWith(words[^1]))
-                            yield return alias[words[^1].Length..];
+                            yield return alias;
                     }
                 }
             }
@@ -44,11 +44,11 @@ namespace AdvancedConsole.Reading.Completing
                     foreach (ITreeNode treeNodeSubNode in treeNode.SubNodes)
                     {
                         if (treeNodeSubNode.Name.StartsWith(words[^1])) 
-                            yield return treeNodeSubNode.Name[words[^1].Length..];
+                            yield return treeNodeSubNode.Name;
                         foreach (string alias in treeNodeSubNode.Aliases)
                         {
                             if (alias.StartsWith(words[^1]))
-                                yield return alias[words[^1].Length..];
+                                yield return alias;
                         }
                     }
                 }
@@ -72,7 +72,7 @@ namespace AdvancedConsole.Reading.Completing
                     {
                         string completion = inputParameter.Name + "=";
                         if(pathPart.StartsWith(completion)) break;
-                        if(inputParameter.Name.StartsWith(pathPart)) result.Add(inputParameter.Name[pathPart.Length..] + "=");
+                        if(inputParameter.Name.StartsWith(pathPart)) result.Add(inputParameter.Name + "=");
                     }
                 }
             });
