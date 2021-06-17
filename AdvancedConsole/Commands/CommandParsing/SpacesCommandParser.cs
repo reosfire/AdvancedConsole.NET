@@ -20,7 +20,6 @@ namespace AdvancedConsole.Commands.CommandParsing
 
         public string[] ParseTokens(string command)
         {
-            command = command;
             List<string> resultTokens = new();
             StringBuilder tokenBuilder = new();
             bool quoteOpened = false;

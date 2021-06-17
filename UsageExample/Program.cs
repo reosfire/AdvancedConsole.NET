@@ -1,6 +1,8 @@
 ﻿using System;
+using AdvancedConsole.Colors;
 using AdvancedConsole.Commands;
 using AdvancedConsole.Commands.Attributes;
+using AdvancedConsole.Commands.Modules;
 using AdvancedConsole.Reading;
 
 namespace UsageExample
@@ -25,6 +27,20 @@ namespace UsageExample
     [Alias("run")]
     public class Commands
     {
+        [Command]
+        public void ColorizedString()
+        {
+            //default
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("Hello ");
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("World");
+            Console.ResetColor();
+            //Lib1
+            (ConsoleColor.Green.Set("Hello ") + ConsoleColor.Red.Set("World")).WriteLine();
+            //lib2
+            ("Hello ".SetColor(ConsoleColor.Green) + "World".SetColor(ConsoleColor.Red)).WriteLine();
+        }
         [Command]
         public void QuotedStrings(string first, string second)
         {
