@@ -26,15 +26,15 @@ namespace AdvancedConsole.Commands.CommandParsing
             char? previousCharacter = null;
             foreach (char c in command)
             {
-                if (c == '"')
+                if (c == '"' && previousCharacter != '\\')
                 {
-                    if (quoteOpened && previousCharacter != '\\') quoteOpened = false;
-                    else quoteOpened = true;
+                    quoteOpened = !quoteOpened;
+                    continue;
                 }
 
-                if (!quoteOpened && c == SplitCharacter && c != ExplicitAssigmentCharacter)
+                if (c == SplitCharacter && !quoteOpened)
                 {
-                    resultTokens.Add(tokenBuilder.Replace("\\\"", "\"").ToString());
+                    resultTokens.Add(tokenBuilder.ToString());
                     tokenBuilder.Clear();
                 }
                 else tokenBuilder.Append(c);
@@ -49,46 +49,55 @@ namespace AdvancedConsole.Commands.CommandParsing
 
         public bool TryParseArgs(string[] inputs, ParameterInfo[] parameters, out object[] args)
         {
-            if (inputs.Length != parameters.Length)
-            {
-                args = null;
-                return false;
-            }
-
             args = new object[parameters.Length];
-            List<string> explicitArgs = new List<string>();
-            List<string> implicitArgs = new List<string>();
+            List<string> explicitArgs = new ();
+            List<string> implicitArgs = new ();
             foreach (string input in inputs)
             {
                 if (IsExplicitArg(input)) explicitArgs.Add(input);
                 else implicitArgs.Add(input);
             }
 
-            return TrySetExplicitArgs(explicitArgs, parameters, ref args)
-                   && TrySetImplicitArgs(implicitArgs, parameters, ref args);
+            bool set = TrySetExplicitArgs(explicitArgs, parameters, args) 
+                          && TrySetImplicitArgs(implicitArgs, parameters, args);
+            if (!set) return false;
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i] == null && parameters[i].HasDefaultValue) args[i] = parameters[i].DefaultValue;
+                if (args[i] == null && !IsNullable(parameters[i].ParameterType)) return false;
+            }
+
+            return true;
         }
 
         private bool IsNullable(Type type) => Nullable.GetUnderlyingType(type) != null;
 
-        private bool TrySetImplicitArgs(IEnumerable<string> implicitArgs, ParameterInfo[] parameters, ref object[] args)
+        private bool TrySetImplicitArgs(IEnumerable<string> implicitArgs, ParameterInfo[] parameters, object[] args)
         {
             int argsIndex = 0;
 
-            void AdjustIndex(ref object[] a)
+            void AdjustIndex()
             {
-                while (argsIndex < a.Length && a[argsIndex] is not null) argsIndex++;
+                while (argsIndex < args.Length && args[argsIndex] is not null) argsIndex++;
             }
 
-            AdjustIndex(ref args);
+            AdjustIndex();
 
             foreach (string input in implicitArgs)
             {
+                if (parameters.Length <= argsIndex) return false;
                 Type requiredType = parameters[argsIndex].ParameterType;
-                if (TypesParser.TryParse(requiredType, input, out object arg)) args[argsIndex] = arg;
+                StringBuilder preprocessedArg = new (input);
+                preprocessedArg.Replace("\\=", "=");
+                preprocessedArg.Replace("\\\"", "\"");
+                if (TypesParser.TryParse(requiredType, preprocessedArg.ToString(), out object arg))
+                {
+                    args[argsIndex] = arg;
+                    AdjustIndex();
+                }
                 else
                 {
-                    if (parameters[argsIndex].HasDefaultValue) args[argsIndex] = parameters[argsIndex].DefaultValue;
-                    else if (IsNullable(requiredType)) args[argsIndex] = null;
+                    if (IsNullable(requiredType)) args[argsIndex] = null;
                     else return false;
                 }
             }
@@ -96,9 +105,9 @@ namespace AdvancedConsole.Commands.CommandParsing
             return true;
         }
 
-        private bool TrySetExplicitArgs(IEnumerable<string> explicitArgs, ParameterInfo[] parameters, ref object[] args)
+        private bool TrySetExplicitArgs(IEnumerable<string> explicitArgs, ParameterInfo[] parameters, object[] args)
         {
-            Dictionary<string, int> nameIndex = new Dictionary<string, int>();
+            Dictionary<string, int> nameIndex = new ();
             for (int i = 0; i < parameters.Length; i++)
             {
                 ParameterInfo parameterInfo = parameters[i];
@@ -107,16 +116,16 @@ namespace AdvancedConsole.Commands.CommandParsing
 
             foreach (string explicitArg in explicitArgs)
             {
-                string[] explicitArgElements = explicitArg.Replace("\"", "").Split('=');
+                string[] explicitArgElements = explicitArg.Split('=');
                 string name = explicitArgElements[0];
                 string value = explicitArgElements[1];
+                if (!nameIndex.ContainsKey(name)) return false;
                 int argsIndex = nameIndex[name];
                 ParameterInfo parameterInfo = parameters[argsIndex];
                 if (TypesParser.TryParse(parameterInfo.ParameterType, value, out object arg)) args[argsIndex] = arg;
                 else
                 {
-                    if (parameterInfo.HasDefaultValue) args[argsIndex] = parameterInfo.DefaultValue;
-                    else if (IsNullable(parameterInfo.ParameterType)) args[argsIndex] = null;
+                    if (IsNullable(parameterInfo.ParameterType)) args[argsIndex] = null;
                     else return false;
                 }
             }
@@ -128,11 +137,13 @@ namespace AdvancedConsole.Commands.CommandParsing
         {
             bool quoteOpened = false;
             int equalsCount = 0;
+            char? prevChar = null;
             foreach (char c in arg)
             {
                 if (c == '"') quoteOpened = !quoteOpened;
-                if (c == ExplicitAssigmentCharacter && !quoteOpened) equalsCount++;
+                if (c == ExplicitAssigmentCharacter && prevChar != '\\') equalsCount++;
                 if (equalsCount > 1) return false;
+                prevChar = c;
             }
 
             return equalsCount == 1;

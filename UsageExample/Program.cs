@@ -28,8 +28,9 @@ namespace UsageExample
     public class Commands
     {
         [Command]
-        public void ColorizedString()
+        public void ColorizedString(string input = "Default value")
         {
+            ConsoleColor.Blue.Set(input).WriteLine();
             //default
             Console.ForegroundColor = ConsoleColor.Green;
             Console.Write("Hello ");

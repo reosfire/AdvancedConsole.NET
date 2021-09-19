@@ -19,7 +19,7 @@ namespace AdvancedConsole.Commands.Modules
             if (declaringType is null) throw new Exception("declaring type can not be null to execute command"); //TODO check this when building tree
             if (!executionContextsCache.ContainsKey(declaringType))
                 executionContextsCache.Add(declaringType, Activator.CreateInstance(declaringType));
-            return Method.Invoke(executionContextsCache[declaringType],args);
+            return Method.Invoke(executionContextsCache[declaringType], args);
         }
         public object Execute(Dictionary<Type, object> executionContextsCache)
         {
