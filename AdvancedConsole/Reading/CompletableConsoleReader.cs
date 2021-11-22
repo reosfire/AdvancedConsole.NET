@@ -113,7 +113,8 @@ namespace AdvancedConsole.Reading
 
         protected virtual bool IsCharacterWritable(char character)
         {
-            return character > 31 && character < 136;
+            return char.IsLetterOrDigit(character) || char.IsPunctuation(character)
+                || char.IsSymbol(character) || character == ' ';
         }
 
         protected virtual void OnEnterPressed()

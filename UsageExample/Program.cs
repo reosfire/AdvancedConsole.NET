@@ -16,8 +16,9 @@ namespace UsageExample
             Listener.AddModule<Commands>();
             Listener.AddModule<Calculator>();
             Listener.AddModule<TextModule>();
-            Listener.StartListening(new ScriptReader("../../../Script.txt"),true);
-            if(Listener.TryExecuteFunction<string>("Text Reverse abcdefgh", out string result)) 
+            Listener.AddModule(new ClassWithCtor("String from ctor"));
+            Listener.StartListening(new ScriptReader("../../../Script.txt"), true);
+            if(Listener.TryExecuteFunction("Text Reverse abcdefgh", out string result)) 
                 Console.WriteLine(result);
             Listener.StartListening();
         }
@@ -84,6 +85,23 @@ namespace UsageExample
             {
                 Console.WriteLine("something2");
             }
+        }
+    }
+
+    [Module]
+    public class ClassWithCtor
+    {
+        private string InitialValue { get; set; }
+
+        public ClassWithCtor(string initialValue)
+        {
+            InitialValue = initialValue;
+        }
+
+        [Command]
+        public void PrintInitialValue()
+        {
+            Console.WriteLine(InitialValue);
         }
     }
 }

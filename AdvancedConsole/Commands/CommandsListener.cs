@@ -32,6 +32,11 @@ namespace AdvancedConsole.Commands
         {
             Modules.Add(new ReflectiveModuleBuilder(), typeof(T));
         }
+        public void AddModule<T>(T obj)
+        {
+            ExecutionContextsCache.Add(typeof(T), obj); 
+            AddModule<T>();
+        }
         public void StartListening(ICommandReader reader, bool wait = true)
         {
             if(IsListening) return;
@@ -102,7 +107,7 @@ namespace AdvancedConsole.Commands
                     string readCommand = Reader.ReadCommand();
                     ExecuteProcedure(readCommand);
                 }
-                catch (ReadingCancellationToken e)
+                catch (ReadingCancellationToken)
                 {
                     if(Reader is IDisposable disposableReader) disposableReader.Dispose();
                     StopListening();
