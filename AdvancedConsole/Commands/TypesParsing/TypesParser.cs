@@ -66,6 +66,8 @@ namespace AdvancedConsole.Commands.TypesParsing
                 return false;
             }
 
+            if (type.IsEnum) return Enum.TryParse(type, input, out parsed);
+
             if (!TypeParsers.ContainsKey(type)) return false;
             foreach (ITypeParser parser in TypeParsers[type])
             {
