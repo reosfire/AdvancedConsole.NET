@@ -1,1 +1,15 @@
-﻿
+﻿print "Enter number: "
+readInt count
+
+int 1 1
+
+int a 0
+int b 1
+
+fun next "sum a b; copy from=b to=a; copy from=res to=b"
+
+int i 0
+fun continue "sum i 1; copy from=res to=i; greater i count; not res"
+fun callFor "call for"
+fun for "printMem i; print \": \"; printMem b; print \n; call next; if continue callFor"
+call for

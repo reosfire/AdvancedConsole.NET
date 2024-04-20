@@ -9,18 +9,14 @@ namespace UsageExample
 {
     internal static class Program
     {
-        public static CommandsListener Listener { get; set; } = new CommandsListener();
+        private static readonly CommandsListener _listener = new();
 
         private static void Main()
         {
-            Listener.AddModule<Commands>();
-            Listener.AddModule<Calculator>();
-            Listener.AddModule<TextModule>();
-            Listener.AddModule(new ClassWithCtor("String from ctor"));
-            Listener.StartListening(new ScriptReader("../../../Script.txt"), true);
-            if(Listener.TryExecuteFunction("Text Reverse abcdefgh", out string result)) 
-                Console.WriteLine(result);
-            Listener.StartListening();
+            _listener.AddModule<Reoslang>();
+            _listener.StartListening(new ScriptReader("../../../Script.txt"));
+            Console.WriteLine("Program ended. Press any key to exit");
+            Console.ReadLine();
         }
     }
     
@@ -102,6 +98,24 @@ namespace UsageExample
         public void PrintInitialValue()
         {
             Console.WriteLine(InitialValue);
+        }
+    }
+    [Module("Console")]
+    public class ConsoleModule
+    {
+        [Command]
+        public void SetColor(ConsoleColor color)
+        {
+            Console.ForegroundColor = color;
+        }
+        
+        [Command]
+        public void PrintLine(string input, ConsoleColor color = ConsoleColor.Gray)
+        {
+            ConsoleColor startColor = Console.ForegroundColor;
+            Console.ForegroundColor = color;
+            Console.WriteLine(input);
+            Console.ForegroundColor = startColor;
         }
     }
 }
